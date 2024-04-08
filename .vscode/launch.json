@@ -1,0 +1,20 @@
+{
+  "configurations": [
+    {
+      "name": "Fenrir",
+      "type": "docker",
+      "request": "launch",
+      "preLaunchTask": "docker-run: debug",
+      "python": {
+        "pathMappings": [
+          {
+            "localRoot": "${workspaceFolder}",
+            "remoteRoot": "/app"
+          }
+        ],
+        "projectType": "flask"
+      },
+      "dockerServerReadyAction": {}
+    }
+  ]
+}

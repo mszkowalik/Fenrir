@@ -83,10 +83,17 @@ def generate_cert():
         cert_content = f.read()
     with open(key_path, 'r') as f:
         key_content = f.read()
+    # Serializing key and cert to PEM format and then encoding to base64
+    key_pem = key.private_bytes(encoding=serialization.Encoding.PEM,
+                                format=serialization.PrivateFormat.TraditionalOpenSSL if key_type == 'EC' else serialization.PrivateFormat.PKCS8,
+                                encryption_algorithm=serialization.NoEncryption())
+    cert_pem = cert.public_bytes(serialization.Encoding.PEM)
+    tls_key = base64.b64encode(key_pem).decode('utf-8')
+    tls_cert = base64.b64encode(cert_pem).decode('utf-8')
 
     return jsonify({'message': 'Certificate generated successfully.',
-                    'tls.key': key_content,
-                    'tls.crt': cert_content})
+                    'tls.key': tls_key,
+                    'tls.crt': tls_cert})
 
 @app.route('/getTLSKey', methods=['POST'])
 def get_tls_key():

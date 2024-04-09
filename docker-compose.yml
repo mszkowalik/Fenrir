@@ -15,5 +15,10 @@ services:
     build:
       context: .
       dockerfile: ./Dockerfile
+    env_file:
+      - .env
+    volumes:
+      - ./certs:/certs
+      - ./ca-certs:/ca-certs
     ports:
       - 5003:5000

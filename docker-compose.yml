@@ -1,10 +1,19 @@
 version: '3.4'
 
 services:
+  init-certs:
+    image: busybox
+    volumes:
+      - ./certs:/certs
+    command: >
+      sh -c "mkdir -p /certs/issued && chmod -R 777 /certs && echo 'Init tasks completed.'"
+
   fenrir:
     image: fenrir
+    depends_on:
+      - init-certs
     build:
       context: .
       dockerfile: ./Dockerfile
     ports:
-      - 5003:5003
+      - 5003:5000

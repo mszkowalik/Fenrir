@@ -43,7 +43,7 @@ def generate_cert():
     if key_type == 'RSA':
         key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
     elif key_type == 'EC':
-        key = ec.generate_private_key(ec.SECP384R1())  # Example curve
+        key = ec.generate_private_key(ec.SECP256R1())  # Example curve
     else:
         return jsonify({'error': f'Unsupported key type: {key_type}'}), 400
 
@@ -135,6 +135,31 @@ def get_tls_key():
     tlskey2_base64 = base64.b64encode(cert_der).decode('utf-8')
 
     return jsonify({'TLSKey1': f'TLSKey1 {tlskey1_base64}', 'TLSKey2': f'TLSKey2 {tlskey2_base64}'})
+
+def cert_to_c_array():
+    # Assuming the public key is RSA (adjust as necessary for other types)
+    public_key = ca_cert.public_key()
+    public_numbers = public_key.public_numbers()
+
+    # Convert components to hex arrays
+    n_array = ','.join(f'0x{x:02X}' for x in public_numbers.n.to_bytes((public_numbers.n.bit_length() + 7) // 8, byteorder='big'))
+    e_array = ','.join(f'0x{x:02X}' for x in public_numbers.e.to_bytes((public_numbers.e.bit_length() + 7) // 8, byteorder='big'))
+
+    # DN in a format similar to your example, though manual adjustment might be necessary for exact matching
+    dn_bytes = ca_cert.subject.public_bytes(serialization.Encoding.DER)
+    dn_array = ','.join(f'0x{x:02X}' for x in dn_bytes)
+
+    # Generating C-like structures
+    dn_c = f"static const unsigned char PROGMEM TA0_DN[] = {{{dn_array}}};\n"
+    n_c = f"static const unsigned char PROGMEM TA0_RSA_N[] = {{{n_array}}};\n"
+    e_c = f"static const unsigned char PROGMEM TA0_RSA_E[] = {{{e_array}}};\n"
+
+    return dn_c, n_c, e_c
+
+@app.route('/getCEmbedding', methods=['POST'])
+def get_c_embedding():
+    dn_c, n_c, e_c = cert_to_c_array()
+    return jsonify({'dn_c': dn_c, 'n_c': n_c, 'e_c': e_c})
 
 if __name__ == '__main__':
     app.run(debug=True)
